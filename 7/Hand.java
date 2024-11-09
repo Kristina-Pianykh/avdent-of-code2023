@@ -25,7 +25,7 @@ class Hand {
     this.hand = hand;
     this.bid = bid;
     List<Character> labels =
-        Arrays.asList('A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2');
+        Arrays.asList('A', 'K', 'Q', 'T', '9', '8', '7', '6', '5', '4', '3', '2', 'J');
     this.charCount = labels.stream().collect(Collectors.toMap(e -> e, e -> 0));
     this.hand
         .chars()
@@ -36,10 +36,12 @@ class Hand {
   }
 
   public String toString() {
-    return String.format("{hand=%s, bid=%d, type=%s}", this.hand, this.bid, this.rank);
+    return String.format(
+        "{hand=%s, bid=%d, type=%s, charCount=%s}", this.hand, this.bid, this.rank, this.charCount);
   }
 
   public static typeRank getTypeRank(Map<Character, Integer> charCount) {
+    // int Jcount = charCount.get('J');
     List<Character> keys;
     keys = getKeyByVal(charCount, 5);
     if (!keys.isEmpty()) return typeRank.FIVE_OF_A_KIND;
@@ -66,7 +68,14 @@ class Hand {
   public static List<Character> getKeyByVal(Map<Character, Integer> charCount, int val) {
     List<Character> keys = new ArrayList<>();
     for (var ch : charCount.keySet()) {
-      if (charCount.get(ch) == val) keys.add(ch);
+      if ((charCount.get(ch) + charCount.get('J')) == val) {
+
+        System.out.println(
+            String.format(
+                "charCount.get(ch)=%d, charCount.get('J')=%d for ch=%c",
+                charCount.get(ch), charCount.get('J'), ch));
+        keys.add(ch);
+      }
     }
     return keys;
   }
