@@ -156,27 +156,36 @@ public class FertilizerPartTwo {
     }
 
     List<Long> locations = Collections.synchronizedList(new ArrayList<>());
-    List<RangeMapper> threads = new ArrayList<>();
+    List<Thread> threads = new ArrayList<>();
 
     for (int i = 0; i < seeds.size(); i = i + 2) {
       Long start = seeds.get(i);
       Long step = seeds.get(i + 1);
       Long end = start + step;
-      // System.out.println(String.format("start: %d, step: %d, end: %s", start, step, end));
       LOGGER.info(String.format("start: %d, step: %d, end: %s", start, step, end));
-      RangeMapper thread =
-          new RangeMapper(
-              start,
-              step,
-              end,
-              locations,
-              seedToSoil,
-              soilToFertilizer,
-              fertilizerToWater,
-              waterToLight,
-              lightToTemp,
-              tempToHumidity,
-              humidityToLocation);
+
+      Thread thread =
+          new Thread(
+              () -> {
+                Long minLocation = Long.MAX_VALUE;
+                for (long j = start; j < end; j++) {
+                  Long location =
+                      computeLocation(
+                          j,
+                          seedToSoil,
+                          soilToFertilizer,
+                          fertilizerToWater,
+                          waterToLight,
+                          lightToTemp,
+                          tempToHumidity,
+                          humidityToLocation);
+                  assert location != null;
+                  assert location >= 0L;
+                  if (location < minLocation) minLocation = location;
+                }
+                locations.add(minLocation);
+                System.out.println(Thread.currentThread().threadId() + ": " + minLocation);
+              });
       threads.add(thread);
       thread.start();
     }
@@ -193,67 +202,6 @@ public class FertilizerPartTwo {
 
     OptionalLong closestLocation = locations.stream().mapToLong(e -> e).min();
     System.out.println("The closest location: " + closestLocation.getAsLong());
-  }
-
-  private static class RangeMapper extends Thread {
-    Long start;
-    Long step;
-    Long end;
-    List<Long> locations;
-    List<MapItem> seedToSoil;
-    List<MapItem> soilToFertilizer;
-    List<MapItem> fertilizerToWater;
-    List<MapItem> waterToLight;
-    List<MapItem> lightToTemp;
-    List<MapItem> tempToHumidity;
-    List<MapItem> humidityToLocation;
-
-    public RangeMapper(
-        Long start,
-        Long step,
-        Long end,
-        List<Long> locations,
-        List<MapItem> seedToSoil,
-        List<MapItem> soilToFertilizer,
-        List<MapItem> fertilizerToWater,
-        List<MapItem> waterToLight,
-        List<MapItem> lightToTemp,
-        List<MapItem> tempToHumidity,
-        List<MapItem> humidityToLocation) {
-      this.start = start;
-      this.step = step;
-      this.end = end;
-      this.locations = locations;
-      this.seedToSoil = seedToSoil;
-      this.soilToFertilizer = soilToFertilizer;
-      this.fertilizerToWater = fertilizerToWater;
-      this.waterToLight = waterToLight;
-      this.lightToTemp = lightToTemp;
-      this.tempToHumidity = tempToHumidity;
-      this.humidityToLocation = humidityToLocation;
-    }
-
-    @Override
-    public void run() {
-      Long minLocation = Long.MAX_VALUE;
-      for (long j = start; j < end; j++) {
-        Long location =
-            computeLocation(
-                j,
-                seedToSoil,
-                soilToFertilizer,
-                fertilizerToWater,
-                waterToLight,
-                lightToTemp,
-                tempToHumidity,
-                humidityToLocation);
-        assert location != null;
-        assert location >= 0L;
-        if (location < minLocation) minLocation = location;
-      }
-      locations.add(minLocation);
-      System.out.println(Thread.currentThread().threadId() + ": " + minLocation);
-    }
   }
 
   static class CustomFormatter extends SimpleFormatter {
