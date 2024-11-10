@@ -5,7 +5,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 enum typeRank {
-  ERROR,
   HIGH_CARD,
   ONE_PAIR,
   TWO_PAIR,
@@ -31,8 +30,7 @@ class Hand {
         .chars()
         .mapToObj(e -> (char) e)
         .forEach(e -> this.charCount.put((char) e, this.charCount.get(e) + 1));
-    this.rank = getTypeRank(this.charCount);
-    assert this.rank != typeRank.ERROR;
+    // this.rank = computeRank(this.charCount, this.hand);
   }
 
   public String toString() {
@@ -40,42 +38,127 @@ class Hand {
         "{hand=%s, bid=%d, type=%s, charCount=%s}", this.hand, this.bid, this.rank, this.charCount);
   }
 
-  public static typeRank getTypeRank(Map<Character, Integer> charCount) {
-    // int Jcount = charCount.get('J');
-    List<Character> keys;
-    keys = getKeyByVal(charCount, 5);
-    if (!keys.isEmpty()) return typeRank.FIVE_OF_A_KIND;
+  public void computeRankJ() {
+    char[] charArr = this.hand.toCharArray();
+    Character ch;
+    Character ch2;
 
-    keys = getKeyByVal(charCount, 4);
-    if (!keys.isEmpty()) return typeRank.FOUR_OF_A_KIND;
+    // edge case
+    if (this.charCount.get('J') == 5) {
+      this.rank = typeRank.FIVE_OF_A_KIND;
+      return;
+    }
 
-    keys = getKeyByVal(charCount, 3);
-    List<Character> keys1 = getKeyByVal(charCount, 2);
-    if (!keys.isEmpty() && !keys1.isEmpty()) return typeRank.FULL_HOUSE;
-    else if (!keys.isEmpty() && keys1.isEmpty()) return typeRank.THREE_OF_A_KIND;
+    for (int i = 0; i < charArr.length; i++) {
+      ch = Character.valueOf(charArr[i]);
+      if (ch.equals('J')) continue;
+      if (this.charCount.get(ch) + this.charCount.get('J') == 5) {
+        this.rank = typeRank.FIVE_OF_A_KIND;
+        return;
+      }
+    }
 
-    keys = getKeyByVal(charCount, 2);
-    if (!keys.isEmpty() && keys.size() == 2) return typeRank.TWO_PAIR;
-    else if (!keys.isEmpty() && keys.size() == 1) return typeRank.ONE_PAIR;
+    for (int i = 0; i < charArr.length; i++) {
+      ch = Character.valueOf(charArr[i]);
+      if (ch.equals('J')) continue;
+      if (this.charCount.get(ch) + this.charCount.get('J') == 4) {
+        this.rank = typeRank.FOUR_OF_A_KIND;
+        return;
+      }
+    }
 
-    List<Map.Entry> nonZeroLabels =
-        charCount.entrySet().stream().filter(e -> e.getValue() == 1).collect(Collectors.toList());
-    if (nonZeroLabels.size() == 5) return typeRank.HIGH_CARD;
+    for (int i = 0; i < charArr.length; i++) {
+      ch = Character.valueOf(charArr[i]);
 
-    return typeRank.ERROR;
+      if (ch.equals('J')) continue;
+
+      if (this.charCount.get(ch) + this.charCount.get('J') == 3) {
+
+        for (int j = 0; j < charArr.length; j++) {
+          ch2 = Character.valueOf(charArr[j]);
+          if (!ch2.equals('J') && !ch2.equals(ch) && this.charCount.get(ch2) == 2) {
+            this.rank = typeRank.FULL_HOUSE;
+            return;
+          }
+        }
+
+        this.rank = typeRank.THREE_OF_A_KIND;
+        return;
+      }
+    }
+
+    for (int i = 0; i < charArr.length; i++) {
+      ch = Character.valueOf(charArr[i]);
+
+      if (ch.equals('J')) continue;
+
+      if (this.charCount.get(ch) + this.charCount.get('J') == 2) {
+
+        for (int j = 0; j < charArr.length; j++) {
+          ch2 = Character.valueOf(charArr[j]);
+          if (!ch.equals(ch2) && this.charCount.get(ch2) == 2) {
+            this.rank = typeRank.TWO_PAIR;
+            return;
+          }
+        }
+
+        this.rank = typeRank.ONE_PAIR;
+        return;
+      }
+    }
+
+    this.rank = typeRank.HIGH_CARD;
+    return;
   }
 
-  public static List<Character> getKeyByVal(Map<Character, Integer> charCount, int val) {
-    List<Character> keys = new ArrayList<>();
-    for (var ch : charCount.keySet()) {
-      if ((charCount.get(ch) + charCount.get('J')) == val) {
+  public void computeRank() {
+    List<Character> keys;
 
-        System.out.println(
-            String.format(
-                "charCount.get(ch)=%d, charCount.get('J')=%d for ch=%c",
-                charCount.get(ch), charCount.get('J'), ch));
-        keys.add(ch);
-      }
+    keys = getKeyByVal(5);
+    if (!keys.isEmpty()) {
+      this.rank = typeRank.FIVE_OF_A_KIND;
+      return;
+    }
+
+    keys = getKeyByVal(4);
+    if (!keys.isEmpty()) {
+      this.rank = typeRank.FOUR_OF_A_KIND;
+      return;
+    }
+
+    keys = getKeyByVal(3);
+    List<Character> keys1 = getKeyByVal(2);
+    if (!keys.isEmpty() && !keys1.isEmpty()) {
+      this.rank = typeRank.FULL_HOUSE;
+      return;
+    } else if (!keys.isEmpty() && keys1.isEmpty()) {
+      this.rank = typeRank.THREE_OF_A_KIND;
+      return;
+    }
+
+    keys = getKeyByVal(2);
+    if (!keys.isEmpty() && keys.size() == 2) {
+      this.rank = typeRank.TWO_PAIR;
+      return;
+    } else if (!keys.isEmpty() && keys.size() == 1) {
+      this.rank = typeRank.ONE_PAIR;
+      return;
+    }
+
+    List<Map.Entry> nonZeroLabels =
+        this.charCount.entrySet().stream()
+            .filter(e -> e.getValue() == 1)
+            .collect(Collectors.toList());
+    if (nonZeroLabels.size() == 5) {
+      this.rank = typeRank.HIGH_CARD;
+      return;
+    }
+  }
+
+  public List<Character> getKeyByVal(int val) {
+    List<Character> keys = new ArrayList<>();
+    for (var ch : this.charCount.keySet()) {
+      if (this.charCount.get(ch) == val) keys.add(ch);
     }
     return keys;
   }

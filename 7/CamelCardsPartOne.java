@@ -41,6 +41,8 @@ public class CamelCardsPartOne {
       while ((line = reader.readLine()) != null) {
         String[] parts = line.split("\s+");
         Hand hand = new Hand(parts[0], Integer.valueOf(parts[1]));
+        hand.computeRank();
+        assert hand.rank != null;
         LOGGER.fine(hand.toString());
         hands.add(hand);
       }
@@ -63,7 +65,7 @@ public class CamelCardsPartOne {
             return 0;
           });
       hands.sort(customComparator);
-      LOGGER.fine(hands.toString());
+      // LOGGER.fine(hands.toString());
 
       long res = hands.stream().mapToLong(e -> ((hands.indexOf(e) + 1) * e.bid)).sum();
       System.out.println("result: " + res);

@@ -28,25 +28,23 @@ public class CamelCardsPartTwo {
   }
 
   public static void main(String[] args) {
-    initLogger(Level.FINE);
+    initLogger(Level.INFO);
 
     String filePath = "./input.txt";
     Charset charset = Charset.forName("US-ASCII");
     Path file = FileSystems.getDefault().getPath(filePath);
     List<Hand> hands = new ArrayList<>();
 
-    int lineIdx = 0;
     try (BufferedReader reader = Files.newBufferedReader(file, charset)) {
       String line = null;
 
       while ((line = reader.readLine()) != null) {
         String[] parts = line.split("\s+");
         Hand hand = new Hand(parts[0], Integer.valueOf(parts[1]));
-        // LOGGER.fine(hand.toString());
-        if (hand.hand.contains("J")) LOGGER.fine(String.format("%s\n", hand.toString()));
+        hand.computeRankJ();
+        assert hand != null;
+        LOGGER.fine(String.format("%s\n", hand.toString()));
         hands.add(hand);
-        lineIdx++;
-        if (lineIdx == 50) break;
       }
 
       Comparator<Hand> customComparator =
@@ -67,7 +65,6 @@ public class CamelCardsPartTwo {
             return 0;
           });
       hands.sort(customComparator);
-      // LOGGER.fine(hands.toString());
 
       long res = hands.stream().mapToLong(e -> ((hands.indexOf(e) + 1) * e.bid)).sum();
       System.out.println("result: " + res);
