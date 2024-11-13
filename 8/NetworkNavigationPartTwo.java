@@ -4,7 +4,6 @@ import java.nio.charset.Charset;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -25,7 +24,7 @@ public class NetworkNavigationPartTwo {
   private static Map<Character, Integer> translation = Map.of('L', 0, 'R', 1);
 
   public static void initLogger(Level consoleLevel, Level fileLevel) {
-    LOGGER.setLevel(fileLevel);
+    LOGGER.setLevel(consoleLevel);
     ConsoleHandler cHandler = new ConsoleHandler();
     // try {
     //   FileHandler fHandler = new FileHandler("./logall");
@@ -42,7 +41,7 @@ public class NetworkNavigationPartTwo {
   }
 
   public static void main(String[] args) {
-    initLogger(Level.INFO, Level.INFO);
+    initLogger(Level.FINE, Level.INFO);
 
     String filePath = "./input.txt";
     Charset charset = Charset.forName("US-ASCII");
@@ -57,10 +56,10 @@ public class NetworkNavigationPartTwo {
           instructions =
               line.trim()
                   .chars()
-                  .mapToObj(i -> (char) i)
-                  .mapToInt(e -> Integer.valueOf(translation.get(e)))
+                  .mapToObj(e -> Integer.valueOf(translation.get((char) e)))
+                  .mapToInt(Integer::valueOf)
                   .boxed()
-                  .collect(Collectors.toList());
+                  .toList();
         else if (line.contains("=")) {
           String key = line.split("=")[0].trim();
           Matcher m = p.matcher(line.split("=")[1].trim());
@@ -72,18 +71,26 @@ public class NetworkNavigationPartTwo {
         }
       }
 
-      ArrayList<Node> nodes =
+      HashMap<String, Long> nodes =
           map.keySet().stream()
               .filter(e -> e.endsWith("A"))
-              .map(Node::new)
-              .collect(Collectors.toCollection(ArrayList::new));
+              .collect(Collectors.toMap(e -> e, e -> 0L, (oldVal, newVal) -> oldVal, HashMap::new));
+      LOGGER.fine(nodes.toString());
 
-      LOGGER.fine(String.format("startNodes: %s", nodes.toString()));
-      List<Long> indices =
-          List.of(
-              11653L, 12737L, 14363L, 16531L, 19241L,
-              19783L); // first indices for each of the nodes
+      for (var entry : nodes.entrySet()) {
+        // String label = entry.getKey();
+        long idx = 0;
+        int instrIdx;
+        String tmpLabel = entry.getKey();
+        while (entry.getValue() == 0l) {
+          instrIdx = (int) idx % instructions.size();
+          tmpLabel = map.get(tmpLabel).get(instructions.get(instrIdx));
+          if (tmpLabel.endsWith("Z")) nodes.put(entry.getKey(), idx + 1);
+          idx++;
+        }
+      }
 
+      List<Long> indices = nodes.entrySet().stream().map(e -> e.getValue()).toList();
       long i = 2;
       long res = 0;
 
@@ -98,7 +105,7 @@ public class NetworkNavigationPartTwo {
 
         i++;
       }
-      System.out.println("res: " + res);
+      System.out.println("result: " + res);
 
     } catch (IOException x) {
       System.err.format("IOException: %s%n", x);
