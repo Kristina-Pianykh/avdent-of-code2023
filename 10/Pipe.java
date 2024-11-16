@@ -3,70 +3,86 @@ import java.util.List;
 
 class Pipe {
   char tag;
-  List<List<Integer>> connections;
-  List<Integer> pos;
+  List<Position> conns;
+  Position pos;
+  Position from;
+  Position to;
 
   // pos: x, y
-  public Pipe(char ch, List<Integer> pos) throws Exception {
-    List<Integer> conn1;
-    List<Integer> conn2;
+  public Pipe(char ch, Position pos) throws ReachedGroundException, InvalidPipeCharException {
+    Position conn1;
+    Position conn2;
+    this.pos = new Position(pos.x, pos.y);
+    assert this.pos != null;
 
     switch (ch) {
       case '|':
         this.tag = '|';
-        this.pos = Arrays.asList(pos.get(0), pos.get(1));
-        conn1 = Arrays.asList(this.pos.get(0), this.pos.get(1) - 1);
-        conn2 = Arrays.asList(this.pos.get(0), this.pos.get(1) + 1);
-        this.connections = Arrays.asList(conn1, conn2);
+        conn1 = new Position(this.pos.x, this.pos.y - 1);
+        conn2 = new Position(this.pos.x, this.pos.y + 1);
+        this.conns = Arrays.asList(conn1, conn2);
         break;
       case '-':
         this.tag = '-';
-        this.pos = Arrays.asList(pos.get(0), pos.get(1));
-        conn1 = Arrays.asList(this.pos.get(0) - 1, this.pos.get(1));
-        conn2 = Arrays.asList(this.pos.get(0) + 1, this.pos.get(1));
-        this.connections = Arrays.asList(conn1, conn2);
+        conn1 = new Position(this.pos.x - 1, this.pos.y);
+        conn2 = new Position(this.pos.x + 1, this.pos.y);
+        this.conns = Arrays.asList(conn1, conn2);
         break;
       case 'L':
         this.tag = 'L';
-        this.pos = Arrays.asList(pos.get(0), pos.get(1));
-        conn1 = Arrays.asList(this.pos.get(0), this.pos.get(1) - 1);
-        conn2 = Arrays.asList(this.pos.get(0) + 1, this.pos.get(1));
-        this.connections = Arrays.asList(conn1, conn2);
+        conn1 = new Position(this.pos.x, this.pos.y - 1);
+        conn2 = new Position(this.pos.x + 1, this.pos.y);
+        this.conns = Arrays.asList(conn1, conn2);
         break;
       case 'J':
         this.tag = 'J';
-        this.pos = Arrays.asList(pos.get(0), pos.get(1));
-        conn1 = Arrays.asList(this.pos.get(0), this.pos.get(1) - 1);
-        conn2 = Arrays.asList(this.pos.get(0) - 1, this.pos.get(1));
-        this.connections = Arrays.asList(conn1, conn2);
+        conn1 = new Position(this.pos.x, this.pos.y - 1);
+        conn2 = new Position(this.pos.x - 1, this.pos.y);
+        this.conns = Arrays.asList(conn1, conn2);
         break;
       case '7':
         this.tag = '7';
-        this.pos = Arrays.asList(pos.get(0), pos.get(1));
-        conn1 = Arrays.asList(this.pos.get(0) - 1, this.pos.get(1));
-        conn2 = Arrays.asList(this.pos.get(0), this.pos.get(1) + 1);
-        this.connections = Arrays.asList(conn1, conn2);
+        conn1 = new Position(this.pos.x - 1, this.pos.y);
+        conn2 = new Position(this.pos.x, this.pos.y + 1);
+        this.conns = Arrays.asList(conn1, conn2);
         break;
       case 'F':
         this.tag = 'F';
-        this.pos = Arrays.asList(pos.get(0), pos.get(1));
-        conn1 = Arrays.asList(this.pos.get(0), this.pos.get(1) + 1);
-        conn2 = Arrays.asList(this.pos.get(0) + 1, this.pos.get(1));
-        this.connections = Arrays.asList(conn1, conn2);
+        conn1 = new Position(this.pos.x, this.pos.y + 1);
+        conn2 = new Position(this.pos.x + 1, this.pos.y);
+        this.conns = Arrays.asList(conn1, conn2);
         break;
       case '.':
-        throw new Exception("Reach the ground");
+        throw new ReachedGroundException();
       default:
-        throw new Exception("Unrecognized character");
+        throw new InvalidPipeCharException(ch);
     }
   }
 
+  public void setFrom(Integer connsIdx) {
+    this.from = this.conns.get(connsIdx);
+  }
+
+  public void setTo(Integer connsIdx) {
+    this.to = this.conns.get(connsIdx);
+  }
+
   public String toString() {
+    String from = null;
+    if (this.from != null) from = this.from.toString();
+    else from = "null";
+
+    String to = null;
+    if (this.to != null) to = this.to.toString();
+    else to = "null";
+
     return String.format(
-        "{tag=%s, pos=%s, connections=[%s, %s]}",
+        "{tag=%s, pos=%s, from=%s, to=%s, connections=[%s, %s]}",
         this.tag,
         this.pos.toString(),
-        this.connections.get(0).toString(),
-        this.connections.get(1).toString());
+        from,
+        to,
+        this.conns.get(0).toString(),
+        this.conns.get(1).toString());
   }
 }
