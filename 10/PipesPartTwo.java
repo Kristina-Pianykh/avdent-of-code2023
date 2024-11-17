@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.ConsoleHandler;
+import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
@@ -23,22 +24,22 @@ public class PipesPartTwo {
     LOG.setLevel(consoleLevel);
     LOG.setUseParentHandlers(false);
     ConsoleHandler cHandler = new ConsoleHandler();
-    // try {
-    //   FileHandler fHandler = new FileHandler("./log");
-    //   fHandler.setLevel(fileLevel);
-    //   fHandler.setFormatter(new CustomFormatter());
-    //   LOG.addHandler(fHandler);
-    // } catch (IOException e) {
-    //   System.err.println(e.getMessage());
-    //   System.exit(1);
-    // }
+    try {
+      FileHandler fHandler = new FileHandler("./log");
+      fHandler.setLevel(fileLevel);
+      fHandler.setFormatter(new CustomFormatter());
+      LOG.addHandler(fHandler);
+    } catch (IOException e) {
+      System.err.println(e.getMessage());
+      System.exit(1);
+    }
     cHandler.setLevel(consoleLevel);
     cHandler.setFormatter(new CustomFormatter());
     LOG.addHandler(cHandler);
   }
 
   public static void main(String[] args) {
-    initLogger(Level.INFO, Level.INFO);
+    initLogger(Level.FINE, Level.FINE);
 
     String filePath = "./input.txt";
     Charset charset = Charset.forName("US-ASCII");
@@ -113,63 +114,6 @@ public class PipesPartTwo {
             assert pipe.from != null;
             assert pipe.to != null;
 
-            // determine the direction for creating left and right canvas
-            // vertical move
-            try {
-              if (pipe.pos.x == prevPipe.pos.x) {
-                // move down
-                if (pipe.pos.y == prevPipe.pos.y + 1) {
-                  lCanvas.add(new Position(pipe.pos.x + 1, pipe.pos.y));
-                  rCanvas.add(new Position(pipe.pos.x - 1, pipe.pos.y));
-                  if (pipe.tag == 'L') {
-                    rCanvas.add(new Position(pipe.pos.x, pipe.pos.y + 1));
-                    rCanvas.add(new Position(pipe.pos.x - 1, pipe.pos.y + 1));
-                  } else if (pipe.tag == 'J') {
-                    lCanvas.add(new Position(pipe.pos.x, pipe.pos.y + 1));
-                    lCanvas.add(new Position(pipe.pos.x + 1, pipe.pos.y + 1));
-                  }
-                  // move up
-                } else if (pipe.pos.y == prevPipe.pos.y - 1) {
-                  lCanvas.add(new Position(pipe.pos.x - 1, pipe.pos.y));
-                  rCanvas.add(new Position(pipe.pos.x + 1, pipe.pos.y));
-                  if (pipe.tag == '7') {
-                    rCanvas.add(new Position(pipe.pos.x, pipe.pos.y - 1));
-                    rCanvas.add(new Position(pipe.pos.x + 1, pipe.pos.y - 1));
-                  } else if (pipe.tag == 'F') {
-                    lCanvas.add(new Position(pipe.pos.x, pipe.pos.y - 1));
-                    lCanvas.add(new Position(pipe.pos.x - 1, pipe.pos.y - 1));
-                  }
-                }
-                // horizontal move
-              } else if (pipe.pos.y == prevPipe.pos.y) {
-                // move left
-                if (pipe.pos.x == prevPipe.pos.x - 1) {
-                  lCanvas.add(new Position(pipe.pos.x, pipe.pos.y + 1));
-                  rCanvas.add(new Position(pipe.pos.x, pipe.pos.y - 1));
-                  if (pipe.tag == 'L') {
-                    lCanvas.add(new Position(pipe.pos.x - 1, pipe.pos.y));
-                    lCanvas.add(new Position(pipe.pos.x - 1, pipe.pos.y + 1));
-                  } else if (pipe.tag == 'F') {
-                    rCanvas.add(new Position(pipe.pos.x - 1, pipe.pos.y));
-                    rCanvas.add(new Position(pipe.pos.x - 1, pipe.pos.y - 1));
-                  }
-                  // move right
-                } else if (pipe.pos.x == prevPipe.pos.x + 1) {
-                  lCanvas.add(new Position(pipe.pos.x, pipe.pos.y - 1));
-                  rCanvas.add(new Position(pipe.pos.x, pipe.pos.y + 1));
-                  if (pipe.tag == '7') {
-                    lCanvas.add(new Position(pipe.pos.x + 1, pipe.pos.y));
-                    lCanvas.add(new Position(pipe.pos.x + 1, pipe.pos.y - 1));
-                  } else if (pipe.tag == 'J') {
-                    rCanvas.add(new Position(pipe.pos.x + 1, pipe.pos.y));
-                    rCanvas.add(new Position(pipe.pos.x + 1, pipe.pos.y + 1));
-                  }
-                }
-              }
-            } catch (IndexOutOfBoundsException e) {
-              LOG.info("hit out of bounds, ignoring the point");
-            }
-
             line = input.get(pipe.to.y);
             ch = line.charAt(pipe.to.x);
             steps++;
@@ -200,30 +144,102 @@ public class PipesPartTwo {
     System.out.println("number of pipes in the loop: " + loop.size());
     // LOG.info("res: " + ((steps / 2) + 1));
 
+    Pipe prevPipe = loop.get(loop.size() - 1);
+    for (Pipe pipe : loop) {
+      LOG.fine(pipe.toString());
+      // determine the direction for creating left and right canvas
+      // vertical move
+      if (pipe.pos.x == prevPipe.pos.x) {
+        // move down
+        if (pipe.pos.y == prevPipe.pos.y + 1) {
+          addToCanvasIfNotPipe(pipe.pos.x + 1, pipe.pos.y, loop, lCanvas);
+          addToCanvasIfNotPipe(pipe.pos.x - 1, pipe.pos.y, loop, rCanvas);
+
+          if (pipe.tag == 'L') {
+            addToCanvasIfNotPipe(pipe.pos.x, pipe.pos.y + 1, loop, rCanvas);
+            addToCanvasIfNotPipe(pipe.pos.x - 1, pipe.pos.y + 1, loop, rCanvas);
+
+          } else if (pipe.tag == 'J') {
+            addToCanvasIfNotPipe(pipe.pos.x, pipe.pos.y + 1, loop, lCanvas);
+            addToCanvasIfNotPipe(pipe.pos.x + 1, pipe.pos.y + 1, loop, lCanvas);
+          }
+          // move up
+        } else if (pipe.pos.y == prevPipe.pos.y - 1) {
+          addToCanvasIfNotPipe(pipe.pos.x - 1, pipe.pos.y, loop, lCanvas);
+          addToCanvasIfNotPipe(pipe.pos.x + 1, pipe.pos.y, loop, rCanvas);
+
+          if (pipe.tag == '7') {
+            addToCanvasIfNotPipe(pipe.pos.x, pipe.pos.y - 1, loop, rCanvas);
+            addToCanvasIfNotPipe(pipe.pos.x + 1, pipe.pos.y - 1, loop, rCanvas);
+
+          } else if (pipe.tag == 'F') {
+            addToCanvasIfNotPipe(pipe.pos.x, pipe.pos.y - 1, loop, lCanvas);
+            addToCanvasIfNotPipe(pipe.pos.x - 1, pipe.pos.y - 1, loop, lCanvas);
+          }
+        }
+        // horizontal move
+      } else if (pipe.pos.y == prevPipe.pos.y) {
+        // move left
+        if (pipe.pos.x == prevPipe.pos.x - 1) {
+          addToCanvasIfNotPipe(pipe.pos.x, pipe.pos.y + 1, loop, lCanvas);
+          addToCanvasIfNotPipe(pipe.pos.x, pipe.pos.y - 1, loop, rCanvas);
+
+          if (pipe.tag == 'L') {
+            addToCanvasIfNotPipe(pipe.pos.x - 1, pipe.pos.y, loop, lCanvas);
+            addToCanvasIfNotPipe(pipe.pos.x - 1, pipe.pos.y + 1, loop, lCanvas);
+          } else if (pipe.tag == 'F') {
+            addToCanvasIfNotPipe(pipe.pos.x - 1, pipe.pos.y, loop, rCanvas);
+            addToCanvasIfNotPipe(pipe.pos.x - 1, pipe.pos.y - 1, loop, rCanvas);
+          }
+          // move right
+        } else if (pipe.pos.x == prevPipe.pos.x + 1) {
+          addToCanvasIfNotPipe(pipe.pos.x, pipe.pos.y - 1, loop, lCanvas);
+          addToCanvasIfNotPipe(pipe.pos.x, pipe.pos.y + 1, loop, rCanvas);
+
+          if (pipe.tag == '7') {
+            addToCanvasIfNotPipe(pipe.pos.x + 1, pipe.pos.y, loop, lCanvas);
+            addToCanvasIfNotPipe(pipe.pos.x + 1, pipe.pos.y - 1, loop, lCanvas);
+
+          } else if (pipe.tag == 'J') {
+            addToCanvasIfNotPipe(pipe.pos.x + 1, pipe.pos.y, loop, rCanvas);
+            addToCanvasIfNotPipe(pipe.pos.x + 1, pipe.pos.y + 1, loop, rCanvas);
+          }
+        }
+      }
+      prevPipe = pipe;
+    }
+    assert rCanvas.size() > 0;
+    assert lCanvas.size() > 0;
+    LOG.fine("size of rCanvas: " + rCanvas.size());
+    LOG.fine("size of lCanvas: " + lCanvas.size());
+
     ArrayList<String> matrix = createEmptyMatrix();
 
     // writeToFile("output.txt", input);
 
     for (Position pos : lCanvas) {
-      if (pos.y >= 140 || pos.x >= 140) continue;
       String line = matrix.get(pos.y);
       char[] arr = line.toCharArray();
       arr[pos.x] = 'L';
+      LOG.fine(new String(arr));
       matrix.set(pos.y, new String(arr));
     }
+    writeToFile("outputCanvasL.txt", matrix);
 
     for (Position pos : rCanvas) {
-      if (pos.y >= 140 || pos.x >= 140) continue;
       String line = matrix.get(pos.y);
       char[] arr = line.toCharArray();
       arr[pos.x] = 'R';
+      LOG.fine(new String(arr));
       matrix.set(pos.y, new String(arr));
     }
+    writeToFile("outputCanvasLR.txt", matrix);
 
     for (Pipe pipe : loop) {
       String line = matrix.get(pipe.pos.y);
       char[] arr = line.toCharArray();
       arr[pipe.pos.x] = 'X';
+      LOG.fine(new String(arr));
       matrix.set(pipe.pos.y, new String(arr));
     }
     writeToFile("outputCanvas.txt", matrix);
@@ -274,6 +290,21 @@ public class PipesPartTwo {
         "R count (without enclosed points, not part of the inner canvas): " + Rcount);
     System.out.println("Inner dot count: " + innerDotCnt);
     System.out.println("result: " + (Rcount + innerDotCnt));
+  }
+
+  public static void addToCanvasIfNotPipe(
+      int x, int y, ArrayList<Pipe> loop, ArrayList<Position> canvas) {
+    if (x >= 140 || y >= 140) return;
+    if (isPipe(x, y, loop)) return;
+    LOG.fine("not a pipe, adding to canvas");
+    canvas.add(new Position(x, y));
+  }
+
+  public static boolean isPipe(int x, int y, ArrayList<Pipe> loop) {
+    for (Pipe pipe : loop) {
+      if (pipe.pos.x == x && pipe.pos.y == y) return true;
+    }
+    return false;
   }
 
   public static ArrayList<String> createEmptyMatrix() {
