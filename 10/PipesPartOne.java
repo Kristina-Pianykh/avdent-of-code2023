@@ -58,82 +58,83 @@ public class PipesPartOne {
         input.add(line);
         lineIdx++;
       }
-      assert startPos != null;
-
-      long steps = 0;
-
-      outerLoop:
-      for (Character possibleStartPipe : validStartPipes) {
-        LOG.fine(String.format("Assuming 'S' to be %c", possibleStartPipe));
-        char ch = possibleStartPipe;
-        Pipe prevPipe = null;
-        Pipe pipe = null;
-        steps = 0;
-
-        try {
-          prevPipe = new Pipe(ch, startPos);
-          prevPipe.setFrom(0);
-          prevPipe.setTo(1);
-
-          line = input.get(prevPipe.to.y);
-          ch = line.charAt(prevPipe.to.x);
-
-          while (true) {
-
-            if (ch == 'S') {
-              break outerLoop;
-            }
-
-            try {
-              pipe = new Pipe(ch, prevPipe.to);
-
-              if (!pipe.conns.contains(prevPipe.pos)) {
-                LOG.fine(
-                    String.format(
-                        "pipe %s doesn't match with with the previous pipe", pipe.toString()));
-                break;
-              }
-
-              for (int j = 0; j < pipe.conns.size(); j++) {
-                if (pipe.conns.get(j).equals(prevPipe.pos)) {
-                  pipe.setFrom(j);
-                  pipe.setTo(pipe.conns.size() - j - 1);
-                }
-              }
-              assert pipe.from != null;
-              assert pipe.to != null;
-
-              line = input.get(pipe.to.y);
-              ch = line.charAt(pipe.to.x);
-              steps++;
-
-              LOG.fine(String.format("prevPipe: %s", prevPipe.toString()));
-              LOG.fine(String.format("step: %d, currentPipe: %s", steps, pipe.toString()));
-              LOG.fine(String.format("next char=%c\n", ch));
-
-              prevPipe = pipe;
-            } catch (ReachedGroundException e) {
-              LOG.fine(e.getMessage());
-              break;
-            } catch (InvalidPipeCharException e) {
-              LOG.severe(e.getMessage());
-              System.exit(1);
-            }
-          }
-
-        } catch (ReachedGroundException e) {
-          LOG.fine(e.getMessage());
-          break;
-        } catch (InvalidPipeCharException e) {
-          LOG.severe(e.getMessage());
-          System.exit(1);
-        }
-      }
-      LOG.info("res: " + ((steps / 2) + 1));
-
     } catch (IOException x) {
       System.err.format("IOException: %s%n", x);
     }
+    assert startPos != null;
+    assert !input.isEmpty();
+
+    long steps = 0;
+
+    outerLoop:
+    for (Character possibleStartPipe : validStartPipes) {
+      LOG.fine(String.format("Assuming 'S' to be %c", possibleStartPipe));
+      char ch = possibleStartPipe;
+      Pipe prevPipe = null;
+      Pipe pipe = null;
+      String line = null;
+      steps = 0;
+
+      try {
+        prevPipe = new Pipe(ch, startPos);
+        prevPipe.setFrom(0);
+        prevPipe.setTo(1);
+
+        line = input.get(prevPipe.to.y);
+        ch = line.charAt(prevPipe.to.x);
+
+        while (true) {
+
+          if (ch == 'S') {
+            break outerLoop;
+          }
+
+          try {
+            pipe = new Pipe(ch, prevPipe.to);
+
+            if (!pipe.conns.contains(prevPipe.pos)) {
+              LOG.fine(
+                  String.format(
+                      "pipe %s doesn't match with with the previous pipe", pipe.toString()));
+              break;
+            }
+
+            for (int j = 0; j < pipe.conns.size(); j++) {
+              if (pipe.conns.get(j).equals(prevPipe.pos)) {
+                pipe.setFrom(j);
+                pipe.setTo(pipe.conns.size() - j - 1);
+              }
+            }
+            assert pipe.from != null;
+            assert pipe.to != null;
+
+            line = input.get(pipe.to.y);
+            ch = line.charAt(pipe.to.x);
+            steps++;
+
+            LOG.fine(String.format("prevPipe: %s", prevPipe.toString()));
+            LOG.fine(String.format("step: %d, currentPipe: %s", steps, pipe.toString()));
+            LOG.fine(String.format("next char=%c\n", ch));
+
+            prevPipe = pipe;
+          } catch (ReachedGroundException e) {
+            LOG.fine(e.getMessage());
+            break;
+          } catch (InvalidPipeCharException e) {
+            LOG.severe(e.getMessage());
+            System.exit(1);
+          }
+        }
+
+      } catch (ReachedGroundException e) {
+        LOG.fine(e.getMessage());
+        break;
+      } catch (InvalidPipeCharException e) {
+        LOG.severe(e.getMessage());
+        System.exit(1);
+      }
+    }
+    LOG.info("res: " + ((steps / 2) + 1));
   }
 
   static class CustomFormatter extends SimpleFormatter {
